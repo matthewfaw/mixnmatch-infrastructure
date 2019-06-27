@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: restore-jenkins
+spec:
+  template:
+    spec:
+      containers:
+        - name: download-dataset
+          image: google/cloud-sdk:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/certs"
+              name: gcloud-certs
+              readOnly: true
+            - mountPath: "/transfer"
+              name: transfer
+          command:
+            - sh
+            - -c
+            - |
+              gcloud auth activate-service-account --key-file=/certs/svc_account.json
+
+              gsutil cp "<JENKINS_BACKUP_BUCKET>/jenkins.tar.gz" /transfer/jenkins.tar.gz
+              cd /transfer
+              tar -xzvf jenkins.tar.gz
+              rm jenkins.tar.gz
+              cd jenkins_home
+              find . -maxdepth 1 -exec mv {} .. \;
+              cd ..
+              rm -rf jenkins_home
+      restartPolicy: Never
+      volumes:
+        - name: gcloud-certs
+          secret:
+            secretName: gcloud-creds
+        - name: transfer
+          persistentVolumeClaim:
+            claimName: <EXISTING_CLAIM>
+  backoffLimit: 4
+

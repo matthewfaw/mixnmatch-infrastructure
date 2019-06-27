@@ -1,0 +1,62 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: jenkins-backup-cronjob
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          # Note: we apply a pod affinity here to ensure that the
+          # backup job is scheduled on the same node as the jenkins-master
+          # This is necessary, since the backup job needs access to the
+          # Jenkins master persistent volume. Since this volume is
+          # ReadWriteOnce, the backup job must be scheduled on the same
+          # node as the jenkins master in order to access the volume
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: pod-id
+                        operator: In
+                        values:
+                          - jenkins-master
+          imagePullSecrets:
+            - name: docker-creds
+          containers:
+            - name: publish-dataset
+              image: google/cloud-sdk:latest
+              imagePullPolicy: Always
+              volumeMounts:
+                - mountPath: "/jenkins_home"
+                  name: jenkins-home
+                  readOnly: true
+                - mountPath: "/certs"
+                  name: gcloud-certs
+                  readOnly: true
+                - mountPath: "/output"
+                  name: output
+              command:
+                - sh
+                - -c
+                - |
+                  gcloud auth activate-service-account --key-file=/certs/svc_account.json
+
+                  tar -czvf /output/jenkins.tar.gz /jenkins_home
+
+                  gsutil cp -r /output/jenkins.tar.gz <JENKINS_BACKUP_BUCKET>/jenkins.tar.gz
+          restartPolicy: Never
+          volumes:
+            - name: jenkins-home
+              persistentVolumeClaim:
+                claimName: <JENKINS_PVC>
+            - name: gcloud-certs
+              secret:
+                secretName: gcloud-creds
+            - name: output
+              emptyDir: {}
+      backoffLimit: 4
+      activeDeadlineSeconds: 60000

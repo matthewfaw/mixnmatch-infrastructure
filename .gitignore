@@ -1,0 +1,13 @@
+.DS_Store
+*.pyc
+*.swp
+.ipynb_checkpoints/
+
+.idea/
+
+jenkins/generated
+jenkins/templated_values.yaml
+monitoring/generated
+nohup.out
+kubeflow/
+monitoring/templated_grafana_values.yaml

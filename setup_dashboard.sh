@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-URL="https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended/kubernetes-dashboard.yaml"
+URL="https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml"
 BASE=dashboard
 DASHBOARD_YAML=${BASE}/dashboard.yaml
 

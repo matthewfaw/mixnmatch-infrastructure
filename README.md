@@ -1,4 +1,4 @@
-# canela-cocoa
+# Mix&Match Infrastructure
 A project to manage setting up the infrastructure to build, run, monitor, analyze, and
 reproduce experiments.
 

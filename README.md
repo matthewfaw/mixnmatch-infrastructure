@@ -2,6 +2,14 @@
 A project to manage setting up the infrastructure to build, run, monitor, analyze, and
 reproduce experiments.
 
+**This is the code used to create the infrastructure to run experiments associated with our Mix&Match paper:**
+- Here's the associated code to run experiments: https://github.com/matthewfaw/mixnmatch
+- Here's a link to the paper: <INSERT-LINK-HERE>
+  
+_Please cite the above paper if this code is used in any publication._
+  
+## How-To
+
 More specifically, this project is used to setup a Kubernetes cluster
 running on Google Cloud that uses:
 - Jenkins to build the experiment code
@@ -50,3 +58,7 @@ and the jupyter notebook with the associated data will be available by running:
 `kubectl port-forward svc/jupyter-notebook-<DATASET_ID> 8988`
 
 and opening `localhost:8988` in a web browser.
+
+## License
+
+**This project is licensed under the terms of the Apache 2.0 License.**

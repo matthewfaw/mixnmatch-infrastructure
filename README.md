@@ -4,7 +4,7 @@ reproduce experiments.
 
 **This is the code used to create the infrastructure to run experiments associated with our Mix&Match paper:**
 - Here's the associated code to run experiments: https://github.com/matthewfaw/mixnmatch
-- Here's a link to the paper: <INSERT-LINK-HERE>
+- Here's a link to the paper: https://arxiv.org/abs/1907.10154
   
 _Please cite the above paper if this code is used in any publication._
   

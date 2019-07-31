@@ -22,7 +22,7 @@ The project assumes that the following environment variables are set:
 - `GRAFANA_ADMIN_PW`: The base64 encoded password you'd like to use for Grafana (user is `admin`)
 - `JENKINS_BACKUP_BUCKET`: The Google cloud storage bucket where Jenkins backups will be placed/already exist. e.g. `gs://derp/backups`
 - `GKE_CLUSTER_NAME`: The desired name of the GKE cluster that will be created
-- `GCLOUD_DATASET_BUCKET_BASE`: The base bucket name where experiment datasets/results are stored
+- `GCLOUD_DATASET_BUCKET`: The base bucket name where experiment datasets/results are stored
 - `GIT_REPO_SSH`: The git repo ssh e.g. `git@github.com:{username}/{project}.git`
 - `GIT_BRANCH`: The git branch to pull from
 

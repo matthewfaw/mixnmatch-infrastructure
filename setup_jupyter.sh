@@ -41,13 +41,13 @@ else
     echo "Determined experiment id to be: $EXPERIMENT_ID. Copying only this experiment data"
     BUCKET_SUBPATHS="${EXPERIMENT_ID}"
 fi
-if [[ -z "$GCLOUD_DATASET_BUCKET_BASE" ]]; then
+if [[ -z "$GCLOUD_DATASET_BUCKET" ]]; then
     echo "Gcloud dataset bucket base is empty! Cannot proceed."
     exit 1
 else
-    echo "Using Gcloud dataset bucket base: $GCLOUD_DATASET_BUCKET_BASE"
+    echo "Using Gcloud dataset bucket base: $GCLOUD_DATASET_BUCKET"
 fi
-GCLOUD_EXP_BASE="${GCLOUD_DATASET_BUCKET_BASE}/${DATASET_ID}/experiment_running"
+GCLOUD_EXP_BASE="${GCLOUD_DATASET_BUCKET}/${DATASET_ID}/experiment_running"
 
 cat jupyter/notebook.yaml |\
     sed "s/<DATASET_ID_LOWER>/${DATASET_ID_LOWER}/g" |\

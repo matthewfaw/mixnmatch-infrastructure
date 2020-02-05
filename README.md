@@ -1,13 +1,12 @@
-# Mix&Match Infrastructure
+# canela-cocoa
 A project to manage setting up the infrastructure to build, run, monitor, analyze, and
 reproduce experiments.
 
 **This is the code used to create the infrastructure to run experiments associated with our Mix&Match paper:**
-- Here's the associated code to run experiments: https://github.com/matthewfaw/mixnmatch
-- Here's a link to the paper: https://arxiv.org/abs/1907.10154
+- The associated code to run experiments can be found in the other folder
   
 _Please cite the above paper if this code is used in any publication._
-  
+
 ## How-To
 
 More specifically, this project is used to setup a Kubernetes cluster
@@ -51,7 +50,7 @@ and the token can then be pasted into the login page.
 
 To setup a jupyter deployment with the experiment data, run
 
-`./setup_jupyter.sh <DATASET_ID> <EXPERIMENT_ID>`
+`./setup_jupyter.sh <DATASET_ID> <NOTEBOOK_ID> <EXPERIMENT_ID>`
 
 and the jupyter notebook with the associated data will be available by running:
 

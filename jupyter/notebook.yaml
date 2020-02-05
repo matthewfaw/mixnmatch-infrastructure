@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jupyter-notebook-<DATASET_ID_LOWER>
+  name: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
   labels:
-    app: jupyter-notebook-<DATASET_ID_LOWER>
+    app: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
     nb-type: <DATASET_ID_LOWER>
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jupyter-notebook-<DATASET_ID_LOWER>
+      app: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
   template:
     metadata:
       labels:
-        app: jupyter-notebook-<DATASET_ID_LOWER>
+        app: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
         nb-type: <DATASET_ID_LOWER>
     spec:
       securityContext:
@@ -34,7 +34,7 @@ spec:
             - name: GIT_SYNC_SSH
               value: "true"
             - name: GIT_SYNC_ROOT
-              value: "/repo"
+              value: "/jupyterdata/repo"
             - name: GIT_SYNC_DEST
               value: "<REPO_NAME>"
             - name: GIT_SYNC_BRANCH
@@ -42,8 +42,11 @@ spec:
           volumeMounts:
             - name: git-secret
               mountPath: /etc/git-secret
-            - name: git-repo
-              mountPath: /repo
+#            - name: git-repo
+#              mountPath: /repo
+            - name: jupyter-data
+              mountPath: /jupyterdata/repo
+              subPath: repo
           securityContext:
             runAsUser: 65533 # git-sync user
         - name: gcloud-dataset-sync
@@ -53,8 +56,11 @@ spec:
             - mountPath: "/certs"
               name: gcloud-certs
               readOnly: true
-            - mountPath: "/transfer"
-              name: gcloud-data
+#            - mountPath: "/transfer"
+#              name: gcloud-data
+            - mountPath: "/jupyterdata/gcloud_data"
+              subPath: gcloud_data
+              name: jupyter-data
           command:
             - sh
             - -c
@@ -62,8 +68,21 @@ spec:
               gcloud auth activate-service-account --key-file=/certs/svc_account.json
 
               echo "<BUCKET_SUBPATHS>" | tr ',' '\n' | while read subpath; do
-                gsutil cp -r "<GCLOUD_EXP_BASE>/${subpath}" /transfer/
+                gsutil cp -r "<GCLOUD_EXP_BASE>/${subpath}" /jupyterdata/gcloud_data/
               done
+        - name: filesystem-setup
+          image: jupyter/scipy-notebook:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/jupyterdata"
+              name: jupyter-data
+          command:
+            - sh
+            - -c
+            - |
+              cp -r /home/jovyan/. /jupyterdata
+              mkdir /jupyterdata/mcts_models
+              cp -r /jupyterdata/repo/mcts_models/* /jupyterdata/mcts_models/
       containers:
         - name: notebook
           image: jupyter/scipy-notebook:latest
@@ -73,16 +92,15 @@ spec:
           command: ["start-notebook.sh"]
           args: ["--NotebookApp.token=''"]
           volumeMounts:
-            - mountPath: "/home/jovyan/<REPO_NAME>"
-              subPath: "<REPO_NAME>"
-              name: git-repo
-            - mountPath: "/home/jovyan/gcloud_data"
-              name: gcloud-data
+            - mountPath: "/home/jovyan"
+              name: jupyter-data
       volumes:
-        - name: git-repo
-          emptyDir: {}
-        - name: gcloud-data
-          emptyDir: {}
+#        - name: git-repo
+#          emptyDir: {}
+#        - name: gcloud-data
+        - name: jupyter-data
+          persistentVolumeClaim:
+            claimName: jupyter-pvc-<DATASET_ID_LOWER>-<NB_ID>
         - name: git-secret
           secret:
             secretName: git-creds
@@ -91,14 +109,25 @@ spec:
           secret:
             secretName: gcloud-creds
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: jupyter-pvc-<DATASET_ID_LOWER>-<NB_ID>
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "20Gi"
+---
 kind: Service
 apiVersion: v1
 metadata:
-  name: jupyter-notebook-<DATASET_ID_LOWER>
+  name: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
 spec:
   type: ClusterIP
   selector:
-    app: jupyter-notebook-<DATASET_ID_LOWER>
+    app: jupyter-notebook-<DATASET_ID_LOWER>-<NB_ID>
   ports:
   - protocol: TCP
     #nodePort: 30040

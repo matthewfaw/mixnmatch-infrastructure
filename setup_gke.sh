@@ -18,11 +18,17 @@ else
     exit 0
 fi
 
-if [ -z "${GCE_ADMIN_ACCESS_CIDR}" ]; then
-    echo "Missing environment variable GCE_ADMIN_ACCESS_CIDR. Cannot continue. You can set this variable as an environment variable"
-    exit 1
+IP_TO_ADD="$(./current_ip.sh)"
+echo "Adding your current IP (${IP_TO_ADD}) as the authorized IP for this cluster."
+read -p "Is this ok (y/n)? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # do dangerous stuff
+    echo "Proceeding..."
 else
-    echo "Using admin access cidr: ${GCE_ADMIN_ACCESS_CIDR}"
+    echo "Ok. Exiting"
+    exit 1
 fi
 
 echo "Creating a GKE cluster with name $GKE_CLUSTER_NAME"
@@ -32,7 +38,7 @@ gcloud container clusters create ${GKE_CLUSTER_NAME} \
     --preemptible \
     --machine-type n1-standard-4 \
     --enable-master-authorized-networks \
-    --master-authorized-networks ${GCE_ADMIN_ACCESS_CIDR} \
+    --master-authorized-networks ${IP_TO_ADD} \
     --enable-autoscaling \
     --num-nodes 3 \
     --min-nodes 0 \

@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+## To run:
+## Suppose:
+# - gcloud creds are in ~/.gcloud_creds/<CREDS_FILENAME>.json
+# - kaggle creds are in ~/.kaggle/<CREDS_FILENAME>.json
+# - git ssh creds are in ~/.ssh/id_rsa_<...>
+# - git known hosts are in ~/.ssh/known_hosts
+# - existing Jenkins pvc is called "restored-jenkins"
+## Then run:
+# ./setup.sh ~/.gcloud_creds/<CREDS_FILENAME>.json ~/.kaggle/<CREDS_FILENAME>.json ~/.ssh/id_rsa_<...> ~/.ssh/known_hosts restored-jenkins
+
 GCLOUD_SVC_ACCOUNT_FILE=$1
 KAGGLE_CREDS_FILE=$2
 GIT_PRIVATE_CREDS_FILE=$3
@@ -13,7 +23,8 @@ if [[ -z "$JENKINS_BACKUP_BUCKET" ]]; then
 else
     echo "Using Jenkins backup bucket: $JENKINS_BACKUP_BUCKET"
 fi
-KFAPP=kf-canela-cocoa
+#KFAPP=kf-canela-cocoa
+KUBEFLOW_SRC=~/.kubeflow
 if [[ -z "$GKE_CLUSTER_NAME" ]]; then
     echo "GKE Cluster name is empty! Cannot proceed."
     exit 1
@@ -33,7 +44,28 @@ else
     exit 1
 fi
 ./setup_gke.sh $GKE_CLUSTER_NAME
-./setup_kubeflow.sh $KFAPP
+echo "Downloading kfctl"
+read -p "Is this ok (y/n)? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # do dangerous stuff
+    echo "Proceeding..."
+    ./setup_kfctl.sh $KUBEFLOW_SRC
+else
+    echo "Ok. Skipping the download and proceeding."
+fi
+echo "Setting up kubeflow."
+read -p "Is this ok (y/n)? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # do dangerous stuff
+    echo "Proceeding..."
+    ./setup_kubeflow.sh
+else
+    echo "Ok. Skipping the download and proceeding."
+fi
 ./setup_secrets.sh $GCLOUD_SVC_ACCOUNT_FILE $KAGGLE_CREDS_FILE $GIT_PRIVATE_CREDS_FILE $GIT_KNOWN_HOSTS_FILE
 ./setup_experiment_roles.sh
 ./setup_helm.sh $HELM_NAMESPACE

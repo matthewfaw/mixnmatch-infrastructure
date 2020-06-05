@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [[ -z "$GKE_CLUSTER_NAME" ]]; then
     echo "GKE Cluster name is empty! Cannot proceed."
@@ -7,8 +8,7 @@ else
     echo "Using GKE Cluster name: $GKE_CLUSTER_NAME"
 fi
 
-IP_TO_ADD=$(curl ifconfig.me)
-IP_TO_ADD+="/32"
+IP_TO_ADD="$(./current_ip.sh)"
 
 echo "Adding IP $IP_TO_ADD to cluster $GKE_CLUSTER_NAME"
 read -p "Is this ok (y/n)? " -n 1 -r

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixnmatch-playground-<TAG>-<DATASET_ID_LOWER>-<PLAYGROUND_ID>
+  labels:
+    app: mixnmatch-playground-<DATASET_ID_LOWER>-<PLAYGROUND_ID>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixnmatch-playground-<DATASET_ID_LOWER>-<PLAYGROUND_ID>
+  template:
+    metadata:
+      labels:
+        app: mixnmatch-playground-<DATASET_ID_LOWER>-<PLAYGROUND_ID>
+    spec:
+      securityContext:
+        fsGroup: 65533 # to make SSH key readable
+      imagePullSecrets:
+        - name: docker-creds
+      initContainers:
+        - name: git-sync
+          image: k8s.gcr.io/git-sync:v3.1.1
+          imagePullPolicy: Always
+          env:
+            - name: GIT_SYNC_REPO
+              value: "<GIT_REPO>"
+            - name: GIT_SYNC_DEPTH
+              value: "1"
+            - name: GIT_SYNC_ONE_TIME
+              value: "true"
+            - name: GIT_SYNC_SSH
+              value: "true"
+            - name: GIT_SYNC_ROOT
+              value: "/repo"
+            - name: GIT_SYNC_DEST
+              value: "<REPO_NAME>"
+            - name: GIT_SYNC_BRANCH
+              value: "<BRANCH>"
+          volumeMounts:
+            - name: git-secret
+              mountPath: /etc/git-secret
+            - name: git-repo
+              mountPath: /repo
+          securityContext:
+            runAsUser: 65533 # git-sync user
+        - name: gcloud-dataset-sync
+          image: google/cloud-sdk:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/certs"
+              name: gcloud-certs
+              readOnly: true
+            - mountPath: "/gcloud_data"
+              name: gcloud-data
+          command:
+            - sh
+            - -c
+            - |
+              gcloud auth activate-service-account --key-file=/certs/svc_account.json
+
+              if [ -z "<BUCKET_SUBPATHS>" ]; then
+                echo "No bucket subpaths specified... skipping"
+                exit 0
+              fi
+              echo "Copying data from <BUCKET_SUBPATHS> to the container"
+              echo "<BUCKET_SUBPATHS>" | tr ',' '\n' | while read subpath; do
+                gsutil cp -r "<GCLOUD_EXP_BASE>/${subpath}" /gcloud_data/
+              done
+      containers:
+        - name: play-around
+          image: gcr.io/<GCLOUD_PROJECT>/main:<TAG>
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/gcloud_data"
+              name: gcloud-data
+            - name: git-repo
+              mountPath: /repo
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                sleep 10
+              done
+      volumes:
+        - name: git-repo
+          emptyDir: {}
+        - name: gcloud-data
+          emptyDir: {}
+        - name: git-secret
+          secret:
+            secretName: git-creds
+            defaultMode: 288
+        - name: gcloud-certs
+          secret:
+            secretName: gcloud-creds

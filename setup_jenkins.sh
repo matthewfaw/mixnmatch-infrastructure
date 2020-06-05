@@ -6,7 +6,7 @@ HELM_NAMESPACE=${2:-helm}
 # Note, if this isn't set, then a default one will be generated
 ADMIN_PW=$(echo $JENKINS_ADMIN_PW | base64 -D)
 JENKINS_PERMISSIONS_YAML=jenkins/rbac.yaml
-JENKINS_HELM_VERSION=1.1.23
+JENKINS_HELM_VERSION=1.13.0
 JENKINS_NAME=canela
 SRC_JENKINS_VALUES=jenkins/values.yaml
 FINAL_JENKINS_VALUES=jenkins/templated_values.yaml
